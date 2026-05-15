@@ -1,36 +1,85 @@
 #### Programmering i R ####
-#### Datorlaboration  [nummer] ####
-
-# spara denna fil enligt:
-# inl3_grupp01.R om ni tillhör grupp 01 och det är inl 3.
+#### Datorlaboration  [3] ####
 
 
 # Skiv era namn här
-Namn <- c("namn1", "namn2")
+Namn <- c("Mustafa Helali", "Samuel Olivares")
 
 
 # Skiv era liu ID här
-LiuId  <- c("liuId1", "liuId2")
+LiuId  <- c("mushe150", "samol695")
 
-# På del 2 i kursen, när ni arbetar i par, ange även grupptillhörighet enligt: 
-# Grupp<-"grupp01", om ni tillhör grupp01
-Grupp<-""
+Grupp<-"grupp15"
 
 
 
 # Uppgift 1
 #' Title
 #'
-#' @description
+#' @description: Summerar värdet från ett fixt antal tärningar. Skriva en funktion som kan summera ett slumpmässigt antal tärningar. Tärningarna är vanliga 6-sidiga tärningar med värden 1 till 6.
+#' Funktionerna ska heta sum_of_random_dice() med argumenten:
 #'
 #' @param N 
 #' @param K 
 #'
 #' @return
+#' 
+
+
+
 sum_of_dice <- function(N, K){
-  # Skriv din funktion här
-  # Se datorövningarna för information om denna funktion
+  res <- integer(K)
+  for (K in 1:K){
+    res[K] <- sum(sample(1:6, size = N, replace = TRUE))
+  }
+  return(res)
 }
+
+
+
+sum_of_random_dice <- function(K, lambda, my_seed=NULL){
+  if(!is.null(my_seed)) {
+    set.seed(my_seed)
+  }
+  x<-matrix(nrow = K, ncol = 2)
+  colnames(x) <-c("Value","Dice")
+  rownames(x) <-c(1:K)
+  
+ for(i in 1:K) {
+   n<-rpois(1, lambda = lambda)
+   x[i, "Dice"] <- n
+   if (n == 0) {
+     x[i, "Value"] <- 0
+   } else {
+     x[i, "Value"] <- sum_of_dice(N = n, K = 1)
+   }
+
+ }
+
+return(x)
+}
+
+
+# test 3
+x <- sum_of_random_dice(K = 300, lambda = 5, my_seed = 387)
+# Ritar ett histogram över resultaten av summorna.
+hist(x[,2])
+
+
+# test 4
+
+y <- sum_of_random_dice(K = 100, lambda = 10, my_seed = 723)
+
+mean(y[,2])
+sd(y[,2])
+
+
+# test 5
+
+z <- sum_of_random_dice(K = 30, lambda = 0.4, my_seed = 395)
+# korstabell över antalet tärningar och summan.
+table(z[,1],z[,2])
+
 
 #' Title
 #'
@@ -41,9 +90,9 @@ sum_of_dice <- function(N, K){
 #' @param my_seed 
 #'
 #' @return
-sum_of_random_dice <- function(K, lambda, my_seed){
-  # Skriv din funktion här
-}
+#' 
+#' 
+#' 
 
 
 # Uppgift 2 ----
