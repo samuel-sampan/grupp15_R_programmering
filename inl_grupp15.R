@@ -125,53 +125,42 @@ install.packages("lubridate")
 
 library(lubridate)
 
-give_blood <- function(lasttime = today(), holiday = "hemma", sex, type_of_travel = NULL) {
-  
-  lasttime <- as.Date(lasttime)
-  
-  # räkna ut extraTime beroende på resa
-  if (identical(holiday, "hemma")) {
-    extraTime <- lasttime
-  } else {
-    end_date <- as.Date(int_end(holiday))
-    if (type_of_travel == "malaria") {
-      extraTime <- end_date + months(6)
-    } else {
-      extraTime <- end_date + weeks(4)
+give_blood <- function(lasttime= today(), holiday = "hemma", sex, type_of_travel= NULL){
+  lasttime<-as.Date(lasttime)
+  if(holiday=="hemma"){
+    extraTime<-lasttime
+  }else{
+    slutdatum<-int_end(holiday)
+    if(type_of_travel=="other"){
+      extraTime<-slutdatum + weeks(4)
+    }else if(type_of_travel== "malaria"){
+      extraTime<-slutdatum + months(6)
     }
   }
-  
-  # tidigaste möjliga datum baserat på kön
-  if (sex == "f") {
-    suggestion <- lasttime + months(4)
-  } else {
-    suggestion <- lasttime + months(3)
+  if(sex=="f"){
+    forslag <- lasttime+months(4) 
+  }else if(sex=="m"){
+    forslag<-lasttime+ months(3)
+    
   }
-  
-  # jämför suggestion med extraTime
-  if (suggestion > extraTime) {
-    proposal <- suggestion
-  } else {
-    proposal <- extraTime + days(1)
+  if(forslag>extraTime){
+    resultat<-forslag
+  }else{
+    resultat<-extraTime+days(1)
   }
-  
-  # se till att förslaget är en vardag (måndag-fredag)
-  # wday: 1 = söndag, 7 = lördag
-  while (wday(proposal) %in% c(1, 7)) {
-    proposal <- proposal + days(1)
+  while(wday(resultat,week_start = 1)%in% c(6,7)){
+    resultat<- resultat+days(1)
   }
+  month_names <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec") 
+  week_names <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")  
+  m_text <- month_names[month(resultat)] 
+  w_text <- week_names[wday(resultat)]   
+  return(paste("year=", year(resultat),
+               " month=", m_text,
+               " day=", day(resultat),
+               " weekday=", w_text, sep = ""))
   
-  # returnera som textsträng
-  yr <- year(proposal)
-  month_names <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-  mo <- month_names[month(proposal)]
-  dy <- day(proposal)
-  weekday_names <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-  wd <- weekday_names[wday(proposal)]
-  
-  return(paste0("year=", yr, " month=", mo, " day=", dy, " weekday=", wd))
 }
-
 
 
 # OBS: kommentera bort all kod som inte är de obligatoriska variablerna ovan 
