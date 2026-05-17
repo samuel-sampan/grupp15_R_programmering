@@ -73,46 +73,12 @@ return(x)
 }
 
 
-# test 3
-x <- sum_of_random_dice(K = 300, lambda = 5, my_seed = 387)
-# Ritar ett histogram över resultaten av summorna.
-hist(x[,2])
-
-
-# test 4
-
-y <- sum_of_random_dice(K = 100, lambda = 10, my_seed = 723)
-
-mean(y[,2])
-sd(y[,2])
-
-
-# test 5
-
-z <- sum_of_random_dice(K = 30, lambda = 0.4, my_seed = 395)
-# korstabell över antalet tärningar och summan.
-table(z[,1],z[,2])
-
-
-#' Title
-#'
-#' @description
-#'
-#' @param K 
-#' @param lambda 
-#' @param my_seed 
-#'
-#' @return
-#' 
-#' 
-#' 
-
 
 # Uppgift 2 ----
 
 #' Title
 #' 
-#' @description
+#' @description När är en person rekommenderad att ge blod efter parametrarna?
 #'
 #' @param lasttime 
 #' @param holiday 
@@ -124,6 +90,8 @@ table(z[,1],z[,2])
 install.packages("lubridate")
 
 library(lubridate)
+
+#skapa funktionen och definiera argumenten baserat på parametrarna
 
 give_blood <- function(lasttime= today(), holiday = "hemma", sex, type_of_travel= NULL){
   lasttime<-as.Date(lasttime)
@@ -151,6 +119,8 @@ give_blood <- function(lasttime= today(), holiday = "hemma", sex, type_of_travel
   while(wday(resultat,week_start = 1)%in% c(6,7)){
     resultat<- resultat+days(1)
   }
+
+  #returnera funtionen med följande layout
   month_names <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec") 
   week_names <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")  
   m_text <- month_names[month(resultat)] 
@@ -161,10 +131,6 @@ give_blood <- function(lasttime= today(), holiday = "hemma", sex, type_of_travel
                " weekday=", w_text, sep = ""))
   
 }
-
-
-# OBS: kommentera bort all kod som inte är de obligatoriska variablerna ovan 
-# eller funktionerna som defineras i inlämningsuppgifterna!
 
 
 # Använda markmyassignment
