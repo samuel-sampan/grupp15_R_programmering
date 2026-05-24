@@ -33,6 +33,10 @@ install.packages("tidyverse")
 
 library(tidyverse)
 
+install.packages("markmyassignment")
+
+library(markmyassignment)
+
 
 # Ladda in data, obs 5 filer.
 slant1 <- readLines(
