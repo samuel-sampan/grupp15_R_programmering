@@ -34,13 +34,51 @@ install.packages("tidyverse")
 library(tidyverse)
 
 
-inl4 <- readlines(con = "Teaching/R programmering/KursRprgm2/Labs/DataFiles/...")
+# Ladda in data, obs 5 filer.
+slant1 <- readLines(
+  "https://raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/slant1.txt")
+slant2 <- readLines(
+  "https://raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/slant2.txt")
+slant3 <- readLines(
+  "https://raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/slant3.txt")
+slant4 <- readLines(
+  "https://raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/slant4.txt")
+slant5 <- readLines(
+  "https://raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/slant5.txt")
+
+
+
+
+inl4 <- readlines(con = "raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/")
 inl4
 
 coin_test <- function(text, alpha){
-  p2 <- "(Josef|Johan) slingade slant, (klave|krona) blev resultatet!"
-  str_extract(string = inl4[1:3], pattern = p2)
-  str_match(string = inl4[1:3], pattern = p2)
+
+
+
+  namn <- sub(" .*$", "", text)
+
+
+  resultat <- regmatches(text, regexpr("(klave|krona)", text))
+
+
+  data_df <- data.frame(Namn = namn, Resultat = resultat, stringAsFactors = FALSE)
+
+  data_df$Resultat <- factor(data_df$Resultat, levels = c("klave", "krona"))
+  korstabell <- table(data_df$Namn, data_df$Resultat)
+
+
+  test_res <- chisq.test(korstabell, correct = FALSE)
+  p_val <- test_res$p.value
+
+
+  if (p_val < alpha) {
+    message(paste0("P-värdet är ", round(p_val, 4), ". Det finns ett signifikant samband mellan personerna och deras resultat (H0 förskastas)."))
+  } else {
+    message(paste0("P-värdet är ", round(p_val, 4), ". Det finns INTE ett signifikant samband mellan personerna och deras resultat (H0 förkastas ej)."))
+  }
+
+  return(korstabell)
 }
 
 
