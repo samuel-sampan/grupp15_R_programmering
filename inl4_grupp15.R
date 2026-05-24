@@ -19,14 +19,16 @@ Grupp<-"grupp15"
 
 
 # Uppgift 1 ----
-#' Title
+#' @Title coin_test
 #'
 #' @description
+#' funktionen kollar om det finns samband mellan vem kastar myntet och resultat
+#' funktionen läser in text , skapar en tabell och gör ett chi-två test
 #'
-#' @param text
-#' @param alpha
+#' @param text lista med textrader där varje rad visar vem som har kastat och vad är resultat
+#' @param alpha gränsen för när vi förkastar nollhypotesen 
 #'
-#' @return
+#' @return en tabell som visar hur många klave och krona varje person fick
 
 
 install.packages("tidyverse")
@@ -54,30 +56,40 @@ inl4
 
 coin_test <- function(text, alpha){
   
-  
+#'1- Hämta data 
+#'sub puckar ut namnet (första ordet på raden)
   
   namn <- sub(" .*$", "", text)
   
-  
+#'regmatches och regexpr letar upp ordent "klove" eller "krona"
   resultat <- regmatches(text, regexpr("(klave|krona)", text))
   
-  
+#'2_ skapa en data tabell 
+#'spara namn och resultat tillsamnas
   data_df <- data.frame(Namn = namn, Resultat = resultat, stringsAsFactors = FALSE)
   
+#'lås ordning till "klove" sedan "krona" så tabellen alltid blir rätt
   data_df$Resultat <- factor(data_df$Resultat, levels = c("klave", "krona"))
+  
+#'tabell skapar själva korsytabell med antal 
   korstabell <- table(data_df$Namn, data_df$Resultat)
-  
-  
+#'3-Gör statistisk-test
+#' chisq.test räknar ut p-värdet 
   test_res <- chisq.test(korstabell, correct = FALSE)
-  p_val <- test_res$p.value
+
+#'spara p-värdet
+   p_val <- test_res$p.value
   
-  
+#'4-skrivut resultat
+#'kolla om pvärdet är mindre än alpha
   if (p_val < alpha) {
     message(paste0("Testet fick p-värdet ", p_val, " vi kan därför förkasta H0 på nivån alpha = ", alpha))
   } else {
     message(paste0("Testet fick p-värdet ", p_val, " vi kan därför inte förkasta H0 på nivån alpha = ", alpha))
   }
   
+#'5- retunera tabellen
+#'skicka tillbaka tabell som svar
   return(korstabell)
 }
 
