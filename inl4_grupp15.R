@@ -33,10 +33,6 @@ install.packages("tidyverse")
 
 library(tidyverse)
 
-install.packages("markmyassignment")
-
-library(markmyassignment)
-
 
 # Ladda in data, obs 5 filer.
 slant1 <- readLines(
@@ -57,36 +53,43 @@ inl4 <- readlines(con = "raw.githubusercontent.com/STIMALiU/KursRprgm2/master/La
 inl4
 
 coin_test <- function(text, alpha){
-
-
-
+  
+  
+  
   namn <- sub(" .*$", "", text)
-
-
+  
+  
   resultat <- regmatches(text, regexpr("(klave|krona)", text))
-
-
-  data_df <- data.frame(Namn = namn, Resultat = resultat, stringAsFactors = FALSE)
-
+  
+  
+  data_df <- data.frame(Namn = namn, Resultat = resultat, stringsAsFactors = FALSE)
+  
   data_df$Resultat <- factor(data_df$Resultat, levels = c("klave", "krona"))
   korstabell <- table(data_df$Namn, data_df$Resultat)
-
-
+  
+  
   test_res <- chisq.test(korstabell, correct = FALSE)
   p_val <- test_res$p.value
-
-
+  
+  
   if (p_val < alpha) {
-    message(paste0("P-värdet är ", round(p_val, 4), ". Det finns ett signifikant samband mellan personerna och deras resultat (H0 förskastas)."))
+    message(paste0("Testet fick p-värdet ", p_val, " vi kan därför förkasta H0 på nivån alpha = ", alpha))
   } else {
-    message(paste0("P-värdet är ", round(p_val, 4), ". Det finns INTE ett signifikant samband mellan personerna och deras resultat (H0 förkastas ej)."))
+    message(paste0("Testet fick p-värdet ", p_val, " vi kan därför inte förkasta H0 på nivån alpha = ", alpha))
   }
-
+  
   return(korstabell)
 }
 
 
 
+
+coin_test(text = slant4, alpha = 0.05)
+
+
+
+res <- coin_test(text = slant5, alpha = 0.05)
+str(res)
 
 
 # OBS: kommentera bort all kod som inte är de obligatoriska variablerna ovan
