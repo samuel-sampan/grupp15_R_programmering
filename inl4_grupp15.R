@@ -90,16 +90,6 @@ coin_test <- function(text, alpha){
 }
 
 
-
-
-coin_test(text = slant4, alpha = 0.05)
-
-
-
-res <- coin_test(text = slant5, alpha = 0.05)
-str(res)
-
-
 # OBS: kommentera bort all kod som inte är de obligatoriska variablerna ovan
 # eller funktionerna som defineras i inlämningsuppgifterna!
 
