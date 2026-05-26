@@ -50,10 +50,6 @@ slant5 <- readLines(
 
 
 
-
-inl4 <- readlines(con = "raw.githubusercontent.com/STIMALiU/KursRprgm2/master/Labs/DataFiles/")
-inl4
-
 coin_test <- function(text, alpha){
   
 #'1- Hämta data 
