@@ -15,7 +15,7 @@ library(dplyr)
 library(knitr)
 library(httr)
 library(readxl)
-url_kom <- "https://github.com/samuel-sampan/grupp15_R_programmering/blob/4d0bc5c0d67222e4fbc216fe52136db1ad99c7d1/projekt/data.xlsx"
+url_kom <- "https://github.com/samuel-sampan/grupp15_R_programmering/raw/4d0bc5c0d67222e4fbc216fe52136db1ad99c7d1/projekt/data.xlsx"
 temp_kom <- tempfile(fileext = ".xlsx")
 GET(url_kom, write_disk(temp_kom, overwrite = TRUE))
 data <- read_excel(temp_kom)
