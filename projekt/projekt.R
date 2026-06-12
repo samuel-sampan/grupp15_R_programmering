@@ -1,366 +1,275 @@
----
-title: 'Projekt 732G33'
-output:
-  html_document: default
-  pdf_document: default
----
+# ============================================================
+# Projekt 732G33 - Grupp 15
+# Mustafa Helali (mushe150) och Samuel Olivares (samol695)
+# ============================================================
 
-*Forfattare:* Mustafa Helali och Samuel Olivares.
-
-*LiU-id:* mushe150 och samol695
-
-*Grupp:* 15
-
-```{r installera-paket, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- c("ggplot2", "dplyr", "knitr")
-for (p in pkgs) {
-  if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
-}
-```
-
-```{r ladda-paket, echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 library(knitr)
-```
 
-# Introduktion
+# Gemensamt tema for alla plottar
+theme_set(theme_bw(base_size = 13))
 
-Analysen bygger pa tva dataset fran SCB. Kommundatasetet avser fyra kommuner
-i Kalmar lan och innehaller foljande variabler:
 
-- **antal_arbetsloshet**: Antal personer som mottagit arbetsloshetserssattning
-  under perioden (populationsrelaterad, normaliseras).
-- **invanare**: Totalt antal invanare i kommunen.
-- **medianinkomst**: Medianinkomst per ar i kronor (ej populationsrelaterad).
-- **kommunalskatt**: Kommunalskattesats i procent (ej populationsrelaterad).
+# ============================================================
+# 1.1.1 KOMMUNDATA
+# ============================================================
 
-Tidsserie-datasetet innehaller manadsvis antal skilsmassor i Sverige 2000-2024.
+# Rensa kommundata - rad 1-2 ar rubriker, datarader borjar pa rad 3
+kommundata <- data.frame(
+  kommun      = sub("^[0-9]+ ", "", data[[1]][3:nrow(data)]),
+  folkmangd   = as.numeric(data[[2]][3:nrow(data)]),
+  snittlon    = as.numeric(data[[3]][3:nrow(data)]),
+  giftarmal   = as.numeric(data[[4]][3:nrow(data)]),
+  skilsmassor = as.numeric(data[[5]][3:nrow(data)])
+)
 
-# 1.1.1 Kommundata
 
-```{r kommundata-rensning, echo=TRUE}
-#' Rensa och normalisera kommundata
-#'
-#' @description Byter kolumnnamn till rena variabelnamn och beraknar
-#'   normaliserade variabler baserat pa invanarantal.
-#'
-#' @details andel_arbetsloshet ar proportionen (0-1).
-#'   arbetsloshet_per_10k ar antal per 10 000 invanare.
-#'   Medianinkomst och kommunalskatt normaliseras ej.
+# --- Tabell: 5 utvalda kommuner ---
 
-kommun_data <- persons_received_unemployment_benefits_municipality_year
-names(kommun_data) <- c("kommun", "antal_arbetsloshet", "invanare",
-                        "medianinkomst", "kommunalskatt")
-
-kommun_data <- kommun_data |>
-  mutate(
-    andel_arbetsloshet   = antal_arbetsloshet / invanare,
-    arbetsloshet_per_10k = (antal_arbetsloshet / invanare) * 10000
-  )
-```
-
-## Tabell over kommuner
-
-```{r kommundata-tabell, echo=FALSE}
-#' Tabell: kommuner med normaliserade och ursprungliga variabler
+urval <- kommundata |>
+  filter(grepl("Stockholm$|Goteborg$|Malmo$|Linkoping$|Uppsala$",
+               iconv(kommun, "UTF-8", "ASCII//TRANSLIT")))
 
 kable(
-  kommun_data |>
-    select(Kommun          = kommun,
-           `Andel arblosa` = andel_arbetsloshet,
-           `Arblosa/10k`   = arbetsloshet_per_10k,
-           `Medianinkomst` = medianinkomst,
-           `Kommunalskatt` = kommunalskatt),
-  digits  = 4,
-  caption = "Kommundata for Kalmar lan"
+  urval |>
+    select(
+      Kommun              = kommun,
+      Folkmangd           = folkmangd,
+      `Snittlon (kr/man)` = snittlon,
+      Giftarmal           = giftarmal,
+      Skilsmassor         = skilsmassor
+    ),
+  caption = "Kommundata for fem utvalda kommuner, 2020"
 )
-```
 
-## Histogram
 
-```{r histogram-arbetsloshet, echo=FALSE}
-#' Histogram: arbetsloshet per 10 000 invanare med Q1, median, Q3
-#'
-#' @details Vertikala linjer: bla streckad = Q1/Q3, rod heldragen = median.
+# --- Histogram: Genomsnittlig manadslon ---
 
-q1_val  <- quantile(kommun_data$arbetsloshet_per_10k, 0.25)
-med_val <- median(kommun_data$arbetsloshet_per_10k)
-q3_val  <- quantile(kommun_data$arbetsloshet_per_10k, 0.75)
+q1_val  <- quantile(kommundata$snittlon, 0.25)
+med_val <- median(kommundata$snittlon)
+q3_val  <- quantile(kommundata$snittlon, 0.75)
 
-ggplot(kommun_data, aes(x = arbetsloshet_per_10k)) +
-  geom_histogram(bins = 8) +
-  geom_vline(xintercept = q1_val,  linetype = "dashed", color = "blue", linewidth = 0.8) +
-  geom_vline(xintercept = med_val, linetype = "solid",  color = "red",  linewidth = 0.8) +
-  geom_vline(xintercept = q3_val,  linetype = "dashed", color = "blue", linewidth = 0.8) +
+ggplot(kommundata, aes(x = snittlon)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = q1_val,  linetype = "dashed", color = "steelblue",
+             linewidth = 0.9) +
+  geom_vline(xintercept = med_val, linetype = "solid",  color = "red",
+             linewidth = 0.9) +
+  geom_vline(xintercept = q3_val,  linetype = "dashed", color = "steelblue",
+             linewidth = 0.9) +
+  scale_x_continuous(labels = scales::comma) +
   labs(
-    title   = "Fordelning av arbetsloshet per 10 000 invanare",
-    x       = "Arblosa per 10 000 invanare",
+    title   = "Fordelning av genomsnittlig manadslon per kommun (2020)",
+    x       = "Snittlon (kr/man)",
     y       = "Antal kommuner",
-    caption = "Bla streckad = Q1 och Q3 | Rod heldragen = median"
+    caption = "Bla streckad = Q1 och Q3  |  Rod heldragen = Median"
   )
-```
 
-*Tolkning: [Beskriv vad histogrammet visar.]*
 
-## Scatterplot och regression
+# --- Scatterplot: Snittlon vs. Giftarmal ---
 
-```{r scatterplot, echo=FALSE}
-#' Scatterplot: medianinkomst vs. arbetsloshet med OLS-regressionslinje
-
-ggplot(kommun_data, aes(x = medianinkomst, y = arbetsloshet_per_10k)) +
-  geom_point(size = 3) +
-  geom_text(aes(label = kommun), vjust = -0.8, size = 3) +
-  stat_smooth(method = "lm", se = FALSE) +
+ggplot(kommundata, aes(x = snittlon, y = giftarmal)) +
+  geom_point(alpha = 0.5) +
+  stat_smooth(method = "lm", se = FALSE, color = "red") +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Medianinkomst vs. arbetsloshet per 10 000 invanare",
-    x     = "Medianinkomst (kr/ar)",
-    y     = "Arblosa per 10 000 invanare"
+    title = "Snittlon vs. antal giftarmal per kommun (2020)",
+    x     = "Snittlon (kr/man)",
+    y     = "Antal giftarmal"
   )
-```
 
-*Tolkning: [Beskriv vad scatterplotten visar.]*
 
-## Korrelationstest
+# --- Korrelationstest: Snittlon ~ Giftarmal ---
+# H0: cor(snittlon, giftarmal) = 0
+# Ha: cor(snittlon, giftarmal) != 0
 
-```{r korrelationstest, echo=TRUE}
-#' Korrelationstest
-#'
-#' @details H0: cor(medianinkomst, arbetsloshet_per_10k) = 0
-#'   Ha: cor(medianinkomst, arbetsloshet_per_10k) != 0
-#'   Tvasidigt Pearson-test med 95%-konfidensintervall.
-
-kor_test <- cor.test(kommun_data$medianinkomst,
-                     kommun_data$arbetsloshet_per_10k)
+kor_test <- cor.test(kommundata$snittlon, kommundata$giftarmal)
 
 kable(
   data.frame(
-    Korrelation  = round(kor_test$estimate, 4),
-    t_statistika = round(kor_test$statistic, 4),
-    p_varde      = round(kor_test$p.value, 4),
-    KI_nedre     = round(kor_test$conf.int[1], 4),
-    KI_ovre      = round(kor_test$conf.int[2], 4)
+    Korrelation  = round(kor_test$estimate, 3),
+    t_statistika = round(kor_test$statistic, 3),
+    p_varde      = format.pval(kor_test$p.value, digits = 3, eps = 0.001),
+    KI_nedre     = round(kor_test$conf.int[1], 3),
+    KI_ovre      = round(kor_test$conf.int[2], 3)
   ),
-  caption = "Pearson-korrelationstest: medianinkomst och arbetsloshet"
+  caption = "Pearson-korrelationstest: snittlon och antal giftarmal"
 )
-```
 
-*Tolkning: [Beskriv hur ni tolkar korrelationen och testet.]*
 
-## Kategorisk variabel
+# --- Kategorisk variabel: Loneklass (terciler) ---
 
-```{r kategorisk-variabel, echo=TRUE}
-#' Skapar kategorisk variabel: skatteklass
-#'
-#' @description Delar kommunalskatt i tre nivaer baserat pa fordelningen:
-#'   "Lag" (< 33.9%), "Medel" (33.9-34.1%), "Hog" (> 34.1%).
+lon_grans1 <- quantile(kommundata$snittlon, 1/3)
+lon_grans2 <- quantile(kommundata$snittlon, 2/3)
 
-kommun_data <- kommun_data |>
+kommundata <- kommundata |>
   mutate(
-    skatteklass = case_when(
-      kommunalskatt < 33.9  ~ "Lag",
-      kommunalskatt <= 34.1 ~ "Medel",
-      TRUE                  ~ "Hog"
+    loneklass = case_when(
+      snittlon <= lon_grans1 ~ "Lag",
+      snittlon <= lon_grans2 ~ "Medel",
+      TRUE                   ~ "Hog"
     ),
-    skatteklass = factor(skatteklass, levels = c("Lag", "Medel", "Hog"))
+    loneklass = factor(loneklass, levels = c("Lag", "Medel", "Hog"))
   )
 
-table(kommun_data$skatteklass)
-```
+# Kontrollera fordelning
+table(kommundata$loneklass)
 
-## Scatterplot med farg per kategori
 
-```{r scatterplot-farg, echo=FALSE}
-#' Scatterplot fargad efter skatteklass
+# --- Scatterplot fargad per loneklass ---
 
-ggplot(kommun_data, aes(x = medianinkomst, y = arbetsloshet_per_10k,
-                        color = skatteklass)) +
-  geom_point(size = 4) +
-  geom_text(aes(label = kommun), vjust = -0.8, size = 3, show.legend = FALSE) +
+ggplot(kommundata, aes(x = snittlon, y = skilsmassor, color = loneklass)) +
+  geom_point(alpha = 0.7) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Medianinkomst vs. arbetsloshet, fargad efter skatteklass",
-    x     = "Medianinkomst (kr/ar)",
-    y     = "Arblosa per 10 000 invanare",
-    color = "Skatteklass"
+    title = "Snittlon vs. antal skilsmassor, fargad efter loneklass (2020)",
+    x     = "Snittlon (kr/man)",
+    y     = "Antal skilsmassor",
+    color = "Loneklass"
   )
-```
 
-## Boxplot grupperad pa kategorisk variabel
 
-```{r boxplot-kategori, echo=FALSE}
-#' Boxplot: arbetsloshet uppdelat per skatteklass
+# --- Boxplot: Giftarmal per loneklass ---
 
-ggplot(kommun_data, aes(x = skatteklass, y = arbetsloshet_per_10k)) +
+ggplot(kommundata, aes(x = loneklass, y = giftarmal)) +
   geom_boxplot() +
-  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Arbetsloshet per 10 000 uppdelat per skatteklass",
-    x     = "Skatteklass",
-    y     = "Arblosa per 10 000 invanare"
+    title = "Antal giftarmal per loneklass (2020)",
+    x     = "Loneklass",
+    y     = "Antal giftarmal"
   )
-```
 
-*Tolkning: [Beskriv vad ni ser.]*
 
----
+# ============================================================
+# 1.1.2 TIDSSERIEDATA
+# ============================================================
 
-# 1.1.2 Tidseriedata
+# Rensa tidsseridata: manadsvis antal skilsmassor for Riket, 2014-2023
+# Ar 2014-2023 finns i kolumnerna 3-12 (fast tidsperiod, 120 observationer)
+ts_raw <- X0000052M_20260612_131545
 
-```{r tidserie-rensning, echo=TRUE}
-#' Rensar och formar om manadsvis tidsseriedata till langt format
-#'
-#' @description Radata fran SCB ar brett format: rad 2 = ar, rad 3-14 =
-#'   12 manader for Riket, kolumn 5-29 = aren 2000-2024.
-#'   Omformas till ett data.frame med en rad per (ar, manad).
-#'
-#' @note Kolumner 1-2 ar regionkoder (endast Riket anvands).
-#'   Rad 15 ar "okant" och rader 16+ ar SCB-metadata - ignoreras.
+ar_vec     <- as.integer(unlist(ts_raw[2, 3:12]))    # 2014-2023
+manad_namn <- as.character(unlist(ts_raw[3:14, 2]))  # svenska manadsnamn
 
-ts_raw_m <- X0000052M_20260611_213647
-
-ar_vec     <- as.integer(unlist(ts_raw_m[2, 5:29]))    # 25 ar: 2000-2024
-manad_nr   <- as.integer(unlist(ts_raw_m[3:14, 3]))    # 1-12
-manad_namn <- as.character(unlist(ts_raw_m[3:14, 4]))  # "januari"-"december"
-
-# Extrahera varden i matrisform: 12 rader (manader) x 25 kolumner (ar)
-# as.vector() lasar kolumn for kolumn = ar for ar, manad for manad
+# Matris: 12 rader (manader) x 10 kolumner (ar)
 varden_mat <- matrix(
-  as.numeric(unlist(ts_raw_m[3:14, 5:29])),
-  nrow = 12, ncol = 25
+  as.numeric(unlist(ts_raw[3:14, 3:12])),
+  nrow = 12, ncol = 10
 )
 
+# Langt format: en rad per (ar, manad)
 skilsmassdata <- data.frame(
   ar                = rep(ar_vec, each = 12),
-  manad             = rep(manad_nr, times = 25),
-  manad_namn        = rep(manad_namn, times = 25),
+  manad             = rep(1:12, times = 10),
+  manad_namn        = rep(manad_namn, times = 10),
   antal_skilsmassor = as.vector(varden_mat)
 )
 
 skilsmassdata$datum <- as.Date(
   paste(skilsmassdata$ar, skilsmassdata$manad, "01", sep = "-")
 )
-```
 
-## Linjeplot (uppgift 1)
 
-```{r tidserie-linje, echo=FALSE}
-#' Linjeplot: antal skilsmassor per manad 2000-2024
+# --- 1. Linjeplot ---
 
 ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
   geom_line() +
-  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Antal skilsmassor i Sverige per manad (2000-2024)",
+    title = "Antal skilsmassor i Sverige per manad, jan 2014 - dec 2023",
     x     = "Datum",
     y     = "Antal skilsmassor"
   )
-```
 
-*Tolkning: [Beskriv vad ni ser - trend, variation, avvikelser.]*
 
-## Manadsmedelvarden (uppgift 2)
-
-```{r manad-medel, echo=TRUE}
-#' Beraknar genomsnittligt antal skilsmassor per manad over alla ar
-#'
-#' @details Varje manads medelvarde beraknas over 25 ar (2000-2024).
+# --- 2. Manadsmedelvarden ---
 
 month_means <- aggregate(antal_skilsmassor ~ manad, data = skilsmassdata,
                          FUN = mean)
-month_means$manad_namn <- factor(
-  c("jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"),
-  levels = c("jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec")
+
+manad_kort <- c("jan","feb","mar","apr","maj","jun",
+                "jul","aug","sep","okt","nov","dec")
+month_means$manad_namn_kort <- factor(manad_kort, levels = manad_kort)
+
+# Tabell
+kable(
+  month_means[, c("manad_namn_kort", "antal_skilsmassor")],
+  digits    = 1,
+  col.names = c("Manad", "Medelvarde"),
+  caption   = "Genomsnittligt antal skilsmassor per manad (2014-2023)"
 )
 
-kable(month_means[, c("manad_namn","antal_skilsmassor")],
-      digits = 1,
-      col.names = c("Manad", "Medelvarde"),
-      caption = "Genomsnittligt antal skilsmassor per manad (2000-2024)")
-```
-
-```{r manad-medel-plot, echo=FALSE}
-#' Stapeldiagram: manadsmedelvarden for antal skilsmassor
-
-ggplot(month_means, aes(x = manad_namn, y = antal_skilsmassor)) +
+# Graf
+ggplot(month_means, aes(x = manad_namn_kort, y = antal_skilsmassor)) +
   geom_col() +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Medelantal skilsmassor per manad (2000-2024)",
+    title = "Medelantal skilsmassor per manad (2014-2023)",
     x     = "Manad",
-    y     = "Medelvarde"
+    y     = "Medelvarde antal skilsmassor"
   )
-```
 
-*Tolkning: [Beskriv eventuell sasongsvarians.]*
 
-## Boxplot per ar (uppgift 3)
-
-```{r boxplot-ar, echo=FALSE}
-#' Grupperade boxplots: en boxplot per ar, baserat pa de 12 manadesvardeana
+# --- 3. Boxplot per ar ---
 
 ggplot(skilsmassdata, aes(x = factor(ar), y = antal_skilsmassor)) +
   geom_boxplot() +
-  scale_x_discrete(breaks = as.character(seq(2000, 2024, by = 5))) +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Skilsmassor per ar - en boxplot per ar",
+    title = "Skilsmassor per manad uppdelat per ar, 2014-2023",
     x     = "Ar",
     y     = "Antal skilsmassor per manad"
   )
-```
 
-*Tolkning: [Beskriv vad ni ser - niva, spridning, trend over ar.]*
 
-## Sasongsranskning (uppgift 4-5)
-
-```{r sasongsranskning, echo=TRUE}
-#' Subtraherar manadsmedelvarden fran Y for att ta bort sasongsvariationen
-#'
-#' @details Z = Y - manadsmedel + mean(Y), sa att Z far ratt skala.
-#'   Z representerar den sasongsjusterade tidsserien.
+# --- 4. Sasongsranskning ---
 
 Y <- skilsmassdata$antal_skilsmassor
 
-manad_match          <- month_means$antal_skilsmassor[
+# Subtrahera manadsmedelvarden och aterst till ratt skala
+manad_match <- month_means$antal_skilsmassor[
   match(skilsmassdata$manad, month_means$manad)
 ]
-Z                    <- Y - manad_match + mean(Y)
-skilsmassdata$Z      <- Z
-```
 
-```{r yz-plot, echo=FALSE}
-#' Linjeplot: Y (original) och Z (sasongsransad) i samma graf
+Z               <- Y - manad_match + mean(Y)
+skilsmassdata$Z <- Z
+
+
+# --- 5. Linjeplot: Y och Z ---
 
 ggplot(skilsmassdata, aes(x = datum)) +
   geom_line(aes(y = antal_skilsmassor, color = "Y (original)")) +
-  geom_line(aes(y = Z, color = "Z (sasongsransad)")) +
-  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
-  scale_color_manual(values = c("Y (original)"     = "grey60",
-                                "Z (sasongsransad)" = "steelblue")) +
+  geom_line(aes(y = Z,                 color = "Z (sasongsransad)")) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(values = c(
+    "Y (original)"      = "grey60",
+    "Z (sasongsransad)" = "steelblue"
+  )) +
   labs(
-    title = "Skilsmassor: original (Y) och sasongsransad (Z)",
+    title = "Skilsmassor: original (Y) och sasongsransad (Z), 2014-2023",
     x     = "Datum",
     y     = "Antal skilsmassor",
     color = NULL
-  )
-```
+  ) +
+  theme(legend.position = "top")
 
-*Tolkning: [Beskriv skillnaden mellan Y och Z.]*
 
-## Regressionslinje (uppgift 6)
-
-```{r tidserie-regression, echo=FALSE}
-#' Linjeplot med linjear regressionslinje for att visa trend
+# --- 6. Linjeplot med regressionslinje ---
 
 ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
   geom_line(color = "grey60") +
   geom_smooth(method = "lm") +
-  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Antal skilsmassor med regressionslinje (2000-2024)",
+    title = "Antal skilsmassor med linjear regressionslinje, 2014-2023",
     x     = "Datum",
     y     = "Antal skilsmassor"
   )
-```
-
-*Tolkning (trend och sasongsvarians): [Beskriv om det finns en trend och/eller
-sasongsvarians i data.]*
 
