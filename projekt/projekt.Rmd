@@ -2,10 +2,10 @@
 title: "Projekt 732G33"
 author: "Mustafa Helali (mushe150) och Samuel Olivares (samol695), Grupp 15"
 output:
-  html_document:
+  pdf_document: default
+  html_document: default
     toc: true
     toc_float: true
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +13,15 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(ggplot2)
 library(dplyr)
 library(knitr)
+url_kom <- "https://github.com/samuel-sampan/grupp15_R_programmering/raw/117ebbc1e22c7b1a32b9788b837828516ad68113/projekt/data.xlsx"
+temp_kom <- tempfile(fileext = ".xlsx")
+GET(url_kom, write_disk(temp_kom, overwrite = TRUE))
+data <- read_excel(temp_kom)
+
+url_ts <- "https://github.com/samuel-sampan/grupp15_R_programmering/raw/117ebbc1e22c7b1a32b9788b837828516ad68113/projekt/0000052M_20260612-131545.xlsx"
+temp_ts <- tempfile(fileext = ".xlsx")
+GET(url_ts, write_disk(temp_ts, overwrite = TRUE))
+X0000052M_20260612_131545 <- read_excel(temp_ts)
 ```
 
 # Inledning
@@ -379,4 +388,3 @@ januari ar botten. Detta framgar tydligt av bade linjeplotten (avsnitt 1) och
 manadsmedelvardena (avsnitt 2). Den sasongsjusterade serien Z bekraftar att
 nivan, nar sasongsvariationen tagits bort, minskar gradvis fran ca 2 100 till
 ca 1 750 skilsmassor per manad under perioden.
-
