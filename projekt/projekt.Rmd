@@ -8,7 +8,7 @@ header-includes:
   - \usepackage{fontspec}
 ---
 
-{r setup, include=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(ggplot2)
 library(dplyr)
@@ -24,28 +24,26 @@ url_ts <- "https://github.com/samuel-sampan/grupp15_R_programmering/raw/117ebbc1
 temp_ts <- tempfile(fileext = ".xlsx")
 GET(url_ts, write_disk(temp_ts, overwrite = TRUE))
 X0000052M_20260612_131545 <- read_excel(temp_ts)
+```
 
-Inledning
+# Inledning
 
-Rapporten bygger pa två dataset fran SCB: kommundata for ar 2020 och en nationell tidsserie for skilsmassor 2014-2023.
+Rapporten bygger pa två dataset fran SCB: kommundata för år 2020 och en nationell tidsserie for skilsmässor 2014-2023.
 
-Kommundata (2020) innehaller foljande variabler for samtliga 290 svenska kommuner:
+**Kommundata (2020)** innehåller följande variabler for samtliga 290 svenska kommuner:
 
-folkmangd: Folkmangd i kommunen (anvands som normaliseringsbas).
+-   `folkmangd`: Folkmängd i kommunen (används som normaliseringsbas).
+-   `snittlon`: Genomsnittlig månadslön i kronor (ej populationsrelaterad).
+-   `giftarmal`: Antal giftarmål under året (normaliseras per 10 000 invanare).
+-   `skilsmassor`: Antal skilsmässor under året (normaliseras per 10 000 invanare).
 
-snittlon: Genomsnittlig manadslon i kronor (ej populationsrelaterad).
+**Tidsseriedata (jan 2014 - dec 2023)** innehåller månadsvis antal skilsmassor for hela Sverige (Riket). Perioden omfattar exakt 120 månatliga observationer.
 
-giftarmal: Antal giftarmal under aret (normaliseras per 10 000 invanare).
+# 1.1.1 Dataanalys av kommundata
 
-skilsmassor: Antal skilsmassor under aret (normaliseras per 10 000 invanare).
-
-Tidsseriedata (jan 2014 - dec 2023) innehaller manadsvis antal skilsmassor for hela Sverige (Riket). Perioden omfattar exakt 120 manatliga observationer.
-
-1.1.1 Dataanalys av kommundata
-
-{r kommundata-rensning, echo=TRUE}
+```{r kommundata-rensning, echo=TRUE}
 # Rensa och normalisera kommundata
-# Rad 1-2 i raw-datan ar rubriker; datarader borjar pa rad 3
+# Rad 1-2 i raw-datan är rubriker; datarader börjar på rad 3
 kommundata <- data.frame(
   kommun      = sub("^[0-9]+ ", "", data[[1]][3:nrow(data)]),
   folkmangd   = as.numeric(data[[2]][3:nrow(data)]),
@@ -60,12 +58,13 @@ kommundata <- kommundata |>
     giftarmal_per_10k   = (giftarmal   / folkmangd) * 10000,
     skilsmassor_per_10k = (skilsmassor / folkmangd) * 10000
   )
+```
 
-Tabell over utvalda kommuner
+## Tabell over utvalda kommuner
 
-Nedan visas data for fem utvalda kommuner av olika storlek och geografisk spridning. De normaliserade variablerna (per 10 000 invanare) anvands i analyserna.
+Nedan visas data for fem utvalda kommuner av olika storlek och geografisk spridning. De normaliserade variablerna (per 10 000 invånare) används i analyserna.
 
-{r kommundata-tabell}
+```{r kommundata-tabell}
 # Filtrera pa kommunnamn via ASCII-konvertering for att hantera svenska tecken
 urval <- kommundata |>
   filter(grepl("Stockholm$|Goteborg$|Malmo$|Linkoping$|Uppsala$",
@@ -85,11 +84,12 @@ kable(
   digits  = 1,
   caption = "Kommundata for fem utvalda kommuner, 2020"
 )
+```
 
-Histogram: Genomsnittlig manadslon
+## Histogram: Genomsnittlig månadslon
 
-{r histogram-snittlon}
-# Berakna kvartiler for vertikala linjer
+```{r histogram-snittlon}
+# Beräkna kvartiler för vertikala linjer
 q1_val  <- quantile(kommundata$snittlon, 0.25)
 med_val <- median(kommundata$snittlon)
 q3_val  <- quantile(kommundata$snittlon, 0.75)
@@ -108,12 +108,13 @@ ggplot(kommundata, aes(x = snittlon)) +
     y       = "Antal kommuner",
     caption = "Bla streckad = Q1 och Q3  |  Rod heldragen = Median"
   )
+```
 
-Medianen for genomsnittlig manadslon ar r round(med_val) kr/manad, med Q1 = r round(q1_val) kr och Q3 = r round(q3_val) kr. Fordelningen ar hogersnedd: majoriteten av kommunerna koncentreras i ett relativt smalt intervall, medan ett litet antal kommuner med hogre lon drar ut svansen at hoger. Interkvartilsintervallet ar r round(q3_val - q1_val) kr.
+Medianen for genomsnittlig månadslön är `r round(med_val)` kr/månad, med Q1 = `r round(q1_val)` kr och Q3 = `r round(q3_val)` kr. Fördelningen är högersnedd: majoriteten av kommunerna koncentreras i ett relativt smalt intervall, medan ett litet antal kommuner med högre lön drar ut svansen åt höger. Interkvartilsintervallet är `r round(q3_val - q1_val)` kr.
 
-Scatterplot: Snittlon vs. Giftermal per 10 000
+## Scatterplot: Snittlön vs. Giftermal per 10 000
 
-{r scatterplot}
+```{r scatterplot}
 ggplot(kommundata, aes(x = snittlon, y = giftarmal_per_10k)) +
   geom_point(alpha = 0.5) +
   stat_smooth(method = "lm", se = FALSE, color = "red") +
@@ -122,12 +123,13 @@ ggplot(kommundata, aes(x = snittlon, y = giftarmal_per_10k)) +
     x     = "Snittlon (kr/man)",
     y     = "Giftarmal per 10 000 invanare"
   )
+```
 
-Det finns ett svagt positivt samband: kommuner med hogre snittlon tenderar att ha fler giftarmal per 10 000 invanare. Spridningen kring regressionslinjen ar dock stor, sarskilt for kommuner med hog snittlon, vilket antyder att snittlonen ensamt forklarar en begransad del av variationen i giftermal.
+Det finns ett svagt positivt samband: kommuner med högre snittlön tenderar att ha fler giftarmal per 10 000 invanare. Spridningen kring regressionslinjen ar dock stor, särskilt för kommuner med hög snittlön, vilket antyder att snittlönen ensamt förklarar en begränsad del av variationen i giftermål.
 
-Korrelationstest
+## Korrelationstest
 
-{r korrelationstest}
+```{r korrelationstest}
 # H0: cor(snittlon, giftarmal_per_10k) = 0
 # Ha: cor(snittlon, giftarmal_per_10k) != 0
 # Tvasidigt Pearson-test med 95%-konfidensintervall
@@ -143,12 +145,13 @@ kable(
   ),
   caption = "Pearson-korrelationstest: snittlon och giftarmal per 10 000"
 )
+```
 
-Den skattade Pearson-korrelationen ar r round(kor_test$estimate, 3), med ett 95%-konfidensintervall fran r round(kor_test$conf.int[1], 3) till r round(kor_test$conf.int[2], 3). P-vardet ar r format.pval(kor_test$p.value, digits=3, eps=0.001), vilket innebar att vi forkastar nollhypotesen om linjart oberoende pa 5%-nivaen. Det finns alltsa ett statistiskt signifikant positivt samband mellan snittlon och giftarmal per 10 000 invanare, men sambandets styrka ar moderat.
+Den skattade Pearson-korrelationen är `r round(kor_test$estimate, 3)`, med ett 95%-konfidensintervall fran `r round(kor_test$conf.int[1], 3)` till `r round(kor_test$conf.int[2], 3)`. P-vardet är `r format.pval(kor_test$p.value, digits=3, eps=0.001)`, vilket innebär att vi förkastar nollhypotesen om linjärt oberoende på 5%-nivån. Det finns alltså ett statistiskt signifikant positivt samband mellan snittlön och giftarmål per 10 000 invanare, men sambandets styrka är moderat.
 
-Kategorisk variabel: Loneklass
+## Kategorisk variabel: Löneklass
 
-{r kategorisk-variabel, echo=TRUE}
+```{r kategorisk-variabel, echo=TRUE}
 # Dela in kommuner i tre loneklasser baserat pa terciler av snittlonen
 lon_grans1 <- quantile(kommundata$snittlon, 1/3)
 lon_grans2 <- quantile(kommundata$snittlon, 2/3)
@@ -162,12 +165,13 @@ kommundata <- kommundata |>
     ),
     loneklass = factor(loneklass, levels = c("Lag", "Medel", "Hog"))
   )
+```
 
-Kommunerna delas in i tre loneklasser baserat pa terciler av snittlonen: Lag (<= r round(lon_grans1) kr/man), Medel (r round(lon_grans1)-r round(lon_grans2) kr/man) och Hog (> r round(lon_grans2) kr/man). Varje klass innehaller ungefar en tredjedel av kommunerna.
+Kommunerna delas in i tre löneklasser baserat på terciler av snittlönen: **Låg** (\<= `r round(lon_grans1)` kr/man), **Medel** (`r round(lon_grans1)`-`r round(lon_grans2)` kr/man) och **Hög** (\> `r round(lon_grans2)` kr/man). Varje klass innehåller ungefär en tredjedel av kommunerna.
 
-Scatterplot med farg per loneklass
+## Scatterplot med färg per löneklass
 
-{r scatterplot-farg}
+```{r scatterplot-farg}
 ggplot(kommundata, aes(x = snittlon, y = skilsmassor_per_10k, color = loneklass)) +
   geom_point(alpha = 0.7) +
   labs(
@@ -176,12 +180,13 @@ ggplot(kommundata, aes(x = snittlon, y = skilsmassor_per_10k, color = loneklass)
     y     = "Skilsmassor per 10 000 invanare",
     color = "Loneklass"
   )
+```
 
-Kommuner i klassen Hog tenderar att ha fler skilsmassor per 10 000 invanare. Det finns dock stor spridning inom varje klass, och kommuner med lag lon visar bred variation i skilsmassotal.
+Kommuner i klassen Hög tenderar att ha fler skilsmässor per 10 000 invånare. Det finns dock stor spridning inom varje klass, och kommuner med låg lön visar bred variation i skilsmässotal.
 
-Boxplot: Giftermal per loneklass
+## Boxplot: Giftermål per löneklass
 
-{r boxplot-kategori}
+```{r boxplot-kategori}
 ggplot(kommundata, aes(x = loneklass, y = giftarmal_per_10k)) +
   geom_boxplot() +
   labs(
@@ -189,12 +194,15 @@ ggplot(kommundata, aes(x = loneklass, y = giftarmal_per_10k)) +
     x     = "Loneklass",
     y     = "Giftarmal per 10 000 invanare"
   )
+```
 
-Medianen for giftarmal per 10 000 invanare okat tydligt med loneklass. Kommuner med hog snittlon har bade hogre median och storre spridning, medan lag-klassen visar laga och relativt samlade varden. Atminstone en utliggar syns i varje klass, vilket tyder pa att det finns kommuner som avviker fran monsterets inom respektive klass.
+Medianen for giftarmål per 10 000 invånare ökat tydligt med löneklass. Kommuner med hög snittlön har både högre median och större spridning, medan låg-klassen visar låga och relativt samlade värden. åtminstone en utliggar syns i varje klass, vilket tyder på att det finns kommuner som avviker fran mönsterets inom respektive klass.
 
-1.1.2 Dataanalys av tidseriedata
+------------------------------------------------------------------------
 
-{r tidserie-rensning, echo=TRUE}
+# 1.1.2 Dataanalys av tidseriedata
+
+```{r tidserie-rensning, echo=TRUE}
 # Rensa tidsseridata: manadsvis antal skilsmassor for Riket, 2014-2023
 # Ar 2014-2023 finns i kolumnerna 3-12 i raw-datan (fast tidsperiod)
 ts_raw <- X0000052M_20260612_131545
@@ -220,10 +228,11 @@ skilsmassdata <- data.frame(
 skilsmassdata$datum <- as.Date(
   paste(skilsmassdata$ar, skilsmassdata$manad, "01", sep = "-")
 )
+```
 
-1. Linjeplot
+## 1. Linjeplot
 
-{r tidserie-linje}
+```{r tidserie-linje}
 ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
   geom_line() +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
@@ -232,12 +241,13 @@ ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
     x     = "Datum",
     y     = "Antal skilsmassor"
   )
+```
 
-Tidsserien visar ett tydligt sasongsmonstret med toppar i mars och juli och dalar i januari och augusti. Det syns aven en svag nedatgaende trend over hela perioden. Aret 2020 sticker ut med en ovanligt lag januaripik, troligen kopplad till COVID-19-pandemins inverkan pa domstolsprocesser.
+Tidsserien visar ett tydligt säsongsmönstret med toppar i mars och juli och dalar i januari och augusti. Det syns aven en svag nedatgående trend över hela perioden. Året 2020 sticker ut med en ovanligt låg januaripik, troligen kopplad till COVID-19-pandemins inverkan på domstolsprocesser.
 
-2. Manadsmedelvarden
+## 2. Månadsmedelvärden
 
-{r manad-medel, echo=TRUE}
+```{r manad-medel, echo=TRUE}
 # Berakna genomsnittligt antal skilsmassor per manad over 2014-2023
 month_means <- aggregate(antal_skilsmassor ~ manad, data = skilsmassdata,
                          FUN = mean)
@@ -246,16 +256,18 @@ month_means <- aggregate(antal_skilsmassor ~ manad, data = skilsmassdata,
 manad_kort <- c("jan","feb","mar","apr","maj","jun",
                 "jul","aug","sep","okt","nov","dec")
 month_means$manad_namn_kort <- factor(manad_kort, levels = manad_kort)
+```
 
-{r manad-medel-tabell}
+```{r manad-medel-tabell}
 kable(
   month_means[, c("manad_namn_kort", "antal_skilsmassor")],
   digits    = 1,
   col.names = c("Manad", "Medelvarde"),
   caption   = "Genomsnittligt antal skilsmassor per manad (2014-2023)"
 )
+```
 
-{r manad-medel-plot}
+```{r manad-medel-plot}
 ggplot(month_means, aes(x = manad_namn_kort, y = antal_skilsmassor)) +
   geom_col() +
   labs(
@@ -263,12 +275,13 @@ ggplot(month_means, aes(x = manad_namn_kort, y = antal_skilsmassor)) +
     x     = "Manad",
     y     = "Medelvarde antal skilsmassor"
   )
+```
 
-Mars uppvisar det hogsta manadsgenomsnittet (r round(month_means$antal_skilsmassor[3], 1)), foljt av juli (r round(month_means$antal_skilsmassor[7], 1)). Januari ar den manad med lagst genomsnitt (r round(month_means$antal_skilsmassor[1], 1)). Monsterets ar konsekvent: skilsmassor ar vanligare pa var och sommar an under vintermanaderna.
+Mars uppvisar det högsta månadsgenomsnittet (`r round(month_means$antal_skilsmassor[3], 1)`), följt av juli (`r round(month_means$antal_skilsmassor[7], 1)`). Januari är den månad med lägst genomsnitt (`r round(month_means$antal_skilsmassor[1], 1)`). Mönsteret är konsekvent: skilsmässor är vanligare på vår och sommar än under vintermånaderna.
 
-3. Boxplot per ar
+## 3. Boxplot per år
 
-{r boxplot-ar}
+```{r boxplot-ar}
 ggplot(skilsmassdata, aes(x = factor(ar), y = antal_skilsmassor)) +
   geom_boxplot() +
   labs(
@@ -276,12 +289,13 @@ ggplot(skilsmassdata, aes(x = factor(ar), y = antal_skilsmassor)) +
     x     = "Ar",
     y     = "Antal skilsmassor per manad"
   )
+```
 
-Medianen per ar visar en svag nedatgaende trend fran 2014 till 2023. Aret 2020 sticker ut med storre spridning an ovriga ar, troligen pa grund av COVID-19-pandemins effekt pa handlaggningstider for skilsmassor. Ar 2021-2023 visar lagre nivaer an de tidiga aren i perioden.
+Medianen per år visar en svag nedatgående trend fran 2014 till 2023. året 2020 sticker ut med större spridning än övriga år, troligen på grund av COVID-19-pandemins effekt på handläggningstider för skilsmässor. År 2021-2023 visar lägre nivåer an de tidiga åren i perioden.
 
-4-5. Sasongsjustering och jamforelse med original
+## 4-5. Säsongsjustering och jämforelse med original
 
-{r sasongsranskning, echo=TRUE}
+```{r sasongsranskning, echo=TRUE}
 Y <- skilsmassdata$antal_skilsmassor
 
 # Matcha manadsmedelvarden mot varje observation
@@ -292,8 +306,9 @@ manad_match <- month_means$antal_skilsmassor[
 # Z = Y minus sasongsmonstret, skalat med hela tidens medelvarde
 Z               <- Y - manad_match + mean(Y)
 skilsmassdata$Z <- Z
+```
 
-{r yz-plot}
+```{r yz-plot}
 ggplot(skilsmassdata, aes(x = datum)) +
   geom_line(aes(y = antal_skilsmassor, color = "Y (original)")) +
   geom_line(aes(y = Z,                 color = "Z (sasongsransad)")) +
@@ -308,12 +323,13 @@ ggplot(skilsmassdata, aes(x = datum)) +
     y     = "Antal skilsmassor",
     color = NULL
   )
+```
 
-Den sasongsjusterade serien Z (bla) jamnar ut de regelmariga svangningarna fran Y (gra). Z visar den underliggande trenden tydligare utan distorsion fran sasongsvariationen. Trenden i Z ar svagt nedatgaende over perioden.
+Den säsongsjusterade serien Z (blå) jämnar ut de regelmariga svängningarna från Y (grå). Z visar den underliggande trenden tydligare utan distorsion från säsongsvariationen. Trenden i Z är svagt nedåtgående över perioden.
 
-6. Regressionslinje
+## 6. Regressionslinje
 
-{r tidserie-regression}
+```{r tidserie-regression}
 ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
   geom_line(color = "grey60") +
   geom_smooth(method = "lm") +
@@ -323,8 +339,9 @@ ggplot(skilsmassdata, aes(x = datum, y = antal_skilsmassor)) +
     x     = "Datum",
     y     = "Antal skilsmassor"
   )
+```
 
-7. Slutsats: Trend och sasongsvarians
+## 7. Slutsats: Trend och sasongsvarians
 
 Regressionslinjens nedatgaende lutning bekraftar en svag negativ trend: antalet skilsmassor i Sverige minskade under 2014-2023.
 
